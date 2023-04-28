@@ -1,35 +1,61 @@
-import { useState } from 'react';
-import { useHistory } from 'react-router-dom';
+import { useState, useEffect } from "react";
+import { useHistory } from "react-router-dom";
 
-import COLORS from './data/colors.json';
-import VALID_STATUS_CODES from './data/validStatusCodes.json';
+import COLORS from "./data/colors.json";
+import VALID_STATUS_CODES from "./data/validStatusCodes.json";
+const STORAGE_KEY = "cat-status";
 
 const Cat = () => {
   const history = useHistory();
   const [colorIdx, setColorIdx] = useState(0);
   const [delayChange, setDelayChange] = useState(5000);
-  const [statusChange, setStatusChange] = useState('418');
-  const [delay, setDelay] = useState('');
-  const [status, setStatus] = useState('');
+  const [statusChange, setStatusChange] = useState(
+    localStorage.getItem(STORAGE_KEY) || "418"
+  );
+  const [delay, setDelay] = useState("");
+  const [status, setStatus] = useState("");
 
+  useEffect(() => {
+    const colorInterval = setInterval(() => {
+      setColorIdx((prevIdx) => {
+        const newIdx = ++prevIdx % COLORS.length;
+        return newIdx;
+      });
+    }, delayChange);
+    return () => clearInterval(colorInterval);
+  }, [delayChange]);
+
+  // Local Storage for Status's
+
+  useEffect(() => {
+    localStorage.setItem(STORAGE_KEY, statusChange);
+  }, [statusChange]);
+
+  useEffect(() => {
+    const timeOutId = setTimeout(() => {
+      setStatusChange("418");
+    }, 600000);
+
+    return () => clearTimeout(timeOutId);
+  }, [statusChange]);
 
   const handleDelaySubmit = (e) => {
     e.preventDefault();
 
     if (delay < 1 || delay > 10) {
-      alert('Please enter a delay from 1 through 10!');
+      alert("Please enter a delay from 1 through 10!");
       return;
     }
 
     setDelayChange(Number(delay) * 1000);
-    setDelay('');
+    setDelay("");
   };
 
   const handleStatusSubmit = (e) => {
     e.preventDefault();
 
-    if (status === '') {
-      alert('Please Enter A Code');
+    if (status === "") {
+      alert("Please Enter A Code");
       setStatusChange(404);
       return;
     }
@@ -43,7 +69,7 @@ const Cat = () => {
     }
 
     setStatusChange(status);
-    setStatus('');
+    setStatus("");
   };
 
   return (
@@ -51,16 +77,13 @@ const Cat = () => {
       className="cat-container"
       style={{
         backgroundColor: COLORS[colorIdx],
-        transition: 'background-color 1s',
+        transition: "background-color 1s",
       }}
     >
       <h1>Cat Status</h1>
-      <button onClick={() => history.push('/')}>Home</button>
+      <button onClick={() => history.push("/")}>Home</button>
       <div className="image-container">
-        <img
-          src={`https://http.cat/${statusChange}`}
-          alt="404"
-        />
+        <img src={`https://http.cat/${statusChange}`} alt="404" />
       </div>
       <form onSubmit={handleDelaySubmit}>
         <label htmlFor="dStatus">
@@ -68,7 +91,7 @@ const Cat = () => {
             type="number"
             id="dStatus"
             onChange={(e) => {
-              setDelay(e.target.value)
+              setDelay(e.target.value);
             }}
             placeholder="delay in seconds"
             value={delay}
